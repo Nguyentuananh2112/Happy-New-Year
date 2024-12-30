@@ -66,7 +66,12 @@ style.textContent = `
 document.head.appendChild(style);
 
 // Tạo tuyết với tần suất thấp hơn
-setInterval(createSnow, 200);
+setInterval(() => {
+  if (Math.random() < 0.2) { // Chỉ có 20% khả năng tạo bao lì xì mỗi lần kiểm tra
+    createGift();
+  }
+}, 10000); // Kiểm tra mỗi 1 giây
+
 
 // Thêm vào cuối file
 const musicBtn = document.querySelector('.music-toggle');
@@ -126,9 +131,7 @@ function createGift() {
     document.body.appendChild(popup);
     popup.style.display = 'block';
 
-    // Hiệu ứng âm thanh khi mở quà
-    const unwrapSound = new Audio('unwrap.mp3');
-    unwrapSound.play();
+    
 
     setTimeout(() => {
       popup.style.display = 'none';
@@ -208,17 +211,19 @@ function animateClouds() {
 let isAnimating = false; // Tránh tạo quá nhiều hiệu ứng khi người dùng click liên tục.
 
 function createFirework(x, y) {
-
   if (isAnimating) return; // Ngăn tạo hiệu ứng nếu đang chạy
   isAnimating = true;
 
   const colors = ['#ff0', '#ff4', '#4ff', '#f4f', '#4f4'];
-  const particles = 20;
+  const particles = 10;
   const container = document.querySelector('.fireworks-container');
 
-  // Giới hạn tọa độ y trong phạm vi container
-  const containerRect = container.getBoundingClientRect();
-  y = Math.min(y, containerRect.height);
+  // Kích thước vùng giới hạn
+  const regionSize = 100; // Kích thước vùng pháo hoa (100px x 100px)
+  const minX = x - regionSize / 2;
+  const maxX = x + regionSize / 2;
+  const minY = y - regionSize / 2;
+  const maxY = y + regionSize / 2;
 
   for (let i = 0; i < particles; i++) {
     const particle = document.createElement('div');
@@ -226,34 +231,33 @@ function createFirework(x, y) {
     particle.style.backgroundColor =
       colors[Math.floor(Math.random() * colors.length)];
 
-    const angle = (i * 360) / particles;
-    const velocity = 2 + Math.random() * 2;
+    // Random vị trí xuất phát trong vùng giới hạn
+    const startX = Math.random() * (maxX - minX) + minX;
+    const startY = Math.random() * (maxY - minY) + minY;
 
-    particle.style.left = x + 'px';
-    particle.style.top = y + 'px';
+    particle.style.left = startX + 'px';
+    particle.style.top = startY + 'px';
 
     container.appendChild(particle);
+
+    const angle = (i * 360) / particles;
+    const velocity = 2 + Math.random() * 2;
 
     const rad = (angle * Math.PI) / 180;
     const vx = Math.cos(rad) * velocity;
     const vy = Math.sin(rad) * velocity;
 
-    let posX = x;
-    let posY = y;
-    //Mỗi hạt chỉ tồn tại trong một thời gian giới hạn, sau đó tự xóa.
+    let posX = startX;
+    let posY = startY;
     let lifetime = 100; // Sống trong 100 frame
 
     const animate = () => {
       posX += vx;
       posY += vy;
 
-      // Giới hạn phạm vi di chuyển trong container
-      if (
-        lifetime <= 0 ||
-        posX < 0 || posX > containerRect.width ||
-        posY < 0 || posY > containerRect.height
-      ) {
-        particle.remove(); // Xóa hạt cũ
+      // Xóa hạt khi hết thời gian sống
+      if (lifetime-- <= 0) {
+        particle.remove();
         return;
       }
 
@@ -271,6 +275,12 @@ function createFirework(x, y) {
     isAnimating = false;
   }, 300);
 }
+
+// Gắn sự kiện click vào document
+document.addEventListener('click', (event) => {
+  createFirework(event.clientX, event.clientY);
+});
+
 
 // Gắn sự kiện click vào document
 document.addEventListener('click', (event) => {
